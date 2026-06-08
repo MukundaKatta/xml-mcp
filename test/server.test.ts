@@ -34,3 +34,25 @@ test('rejects non-object root in serializer', () => {
   assert.throws(() => jsonToXml('string' as unknown as object));
   assert.throws(() => jsonToXml(null as unknown as object));
 });
+
+test('rejects malformed XML', () => {
+  // Mismatched closing tag must be reported, not silently accepted.
+  assert.throws(() => xmlToJson('<root><a>oops</root>'), /invalid XML/);
+});
+
+test('rejects empty and non-XML input', () => {
+  assert.throws(() => xmlToJson(''), /invalid XML/);
+  assert.throws(() => xmlToJson('just plain text'), /invalid XML/);
+});
+
+test('rejects non-string input to parser', () => {
+  assert.throws(() => xmlToJson(123 as unknown as string), /must be a string/);
+});
+
+test('round-trips a document through both directions', () => {
+  const xml = '<root id="x"><child>1</child></root>';
+  const json = xmlToJson(xml);
+  const out = jsonToXml(json);
+  assert.match(out, /<root id="x">/);
+  assert.match(out, /<child>1<\/child>/);
+});

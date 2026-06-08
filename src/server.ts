@@ -12,7 +12,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 
 const VERSION = '0.1.0';
 
@@ -31,6 +31,15 @@ const builder = new XMLBuilder({
 });
 
 export function xmlToJson(xml: string): unknown {
+  if (typeof xml !== 'string') {
+    throw new Error('XML input must be a string');
+  }
+  // fast-xml-parser does not validate during parse, so malformed markup
+  // (e.g. mismatched tags) would otherwise be silently accepted.
+  const valid = XMLValidator.validate(xml);
+  if (valid !== true) {
+    throw new Error(`invalid XML: ${valid.err.msg} (line ${valid.err.line})`);
+  }
   return parser.parse(xml);
 }
 
